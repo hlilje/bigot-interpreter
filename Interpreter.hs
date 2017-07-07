@@ -1,9 +1,8 @@
-import Prelude hiding (lex)
-import Lexer (lex)
+import Parser (runParser)
 
 
 interpret :: String -> String
-interpret src = unlines . map show $ lex src
+interpret src = src
 
 
 main :: IO()
