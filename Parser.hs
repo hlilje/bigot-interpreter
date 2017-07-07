@@ -1,4 +1,4 @@
-module Parser (module Parser) where
+module Parser (runParser) where
 
 
 newtype Parser a = Parser { parse :: String -> [(a, String)] }
