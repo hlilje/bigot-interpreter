@@ -21,19 +21,12 @@ runParser m s =
 
 {- Parser Application -}
 
--- Advance the parser by extracting a single character from the parser stream
-item :: Parser Char
-item = Parser $ \s ->
-    case s of
-        []     -> []
-        (c:cs) -> [(c, cs)]
-
 -- fmap simply yields a Parser where f is applied to all ASTs resulting from the parse operation
 instance Functor Parser where
     fmap f (Parser cs) = Parser (\s -> [(f a, b) | (a, b) <- cs s])
 
 -- <*> yields a Parser where the AST (functions) of the first parse operation are applied to
--- the ASTs of the second parse operation, keeping the lexems of the second
+-- the ASTs of the second parse operation, keeping the lexemes of the second
 instance Applicative Parser where
     pure = return
     (Parser cs1) <*> (Parser cs2) = Parser (\s -> [(f a, s2) | (f, s1) <- cs1 s, (a, s2) <- cs2 s1])
@@ -77,3 +70,38 @@ option p q = Parser $ \s ->
 instance Alternative Parser where
     empty = mzero
     (<|>) = option
+
+
+{- Parser Advancement -}
+
+-- Advance the parser by extracting a single character from the parser stream
+item :: Parser Char
+item = Parser $ \s ->
+    case s of
+        []     -> []
+        (c:cs) -> [(c, cs)]
+
+-- Check if the current character in the stream matches a given predicate function
+-- and bind it to a new (potentially empty) Parser generator function
+satisfy :: (Char -> Bool) -> Parser Char
+satisfy p = item `bind` \c ->
+    if p c
+    then unit c
+    else failure
+
+-- Check if the character is part of the given String
+oneOf :: String -> Parser Char
+oneOf s = satisfy (flip elem s)
+
+-- Parse one or more occurrences of p, separated by op and return a value obtained by 
+-- recursing until failure on the left hand side of the stream
+chainl1 :: Parser a -> Parser (a -> a -> a) -> Parser a
+p `chainl1` op = do {a <- p; rest a}
+    where rest a = (do f <- op
+                       b <- p
+                       rest (f a b)) -- TODO: How does this terminate??
+                   <|> return a
+
+-- Chain p separated by op or return the given value if the chaining fails
+chainl :: Parser a -> Parser (a -> a -> a) -> a -> Parser a
+chainl p op a = (p `chainl1` op) <|> return a
