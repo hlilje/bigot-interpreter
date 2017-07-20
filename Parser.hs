@@ -1,7 +1,7 @@
-module Parser (Parser, runParser) where
+module Parser (oneOf, Parser, runParser, satisfy) where
 
-import Control.Monad
-import Control.Applicative
+import Control.Monad (MonadPlus(..))
+import Control.Applicative (Alternative(..))
 
 
 {- API -}
@@ -96,7 +96,7 @@ oneOf s = satisfy (flip elem s)
 -- Parse one or more occurrences of p, separated by op and return a value obtained by 
 -- recursing until failure on the left hand side of the stream
 chainl1 :: Parser a -> Parser (a -> a -> a) -> Parser a
-p `chainl1` op = do {a <- p; rest a}
+p `chainl1` op = do { a <- p; rest a }
     where rest a = (do f <- op
                        b <- p
                        rest (f a b)) -- TODO: How does this terminate??
