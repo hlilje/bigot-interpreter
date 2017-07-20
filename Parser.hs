@@ -1,4 +1,4 @@
-module Parser (oneOf, Parser, runParser, satisfy) where
+module Parser (chainl1, oneOf, Parser, runParser, satisfy) where
 
 import Control.Monad (MonadPlus(..))
 import Control.Applicative (Alternative(..))
